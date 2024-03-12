@@ -62,16 +62,16 @@ function HowCiteApp() {
       var parsedCitations = []
       // parse them using citation-js
       for (let c in citations) {
-  let parsed = new Cite(citations[c].citation);
+        let parsed = new Cite(citations[c].citation);
 
-  let formatted = parsed.format('bibliography', {
-    format: 'html',
-    template: 'apa',
-    lang: 'en-US'
-  });
-  // push everything to the vector
-  parsedCitations.push({ 'source': citations[c].source, 'parsed': parsed, 'raw': citations[c].citation, 'formatted': formatted });
-}
+        let formatted = parsed.format('bibliography', {
+          format: 'html',
+          template: 'apa',
+          lang: 'en-US'
+        })
+        // push everything to the vector
+        parsedCitations.push({ 'source': citations[c].source, 'parsed': parsed, 'raw': citations[c].citation, 'formatted': formatted })
+      }
 
       // split by subheader
       let pub = parsedCitations.filter(o => o.source === 'tnrs_pub')[0]

@@ -7,11 +7,11 @@ import {
   MenuItem,
   Select,
   FormControlLabel,
-  FormGroup,
   FormControl,
   FormLabel,
   Switch,
   Link,
+  Chip,
 } from "@material-ui/core";
 
 import { requestSources, requestFamilyClassifications } from "../../actions";
@@ -27,11 +27,10 @@ export function OptionsBox({
   // sources and familiesAvailable
   const [familiesAvailable, setFamiliesAvailable] = useState([]);
   const [familyQuery, setFamilyQuery] = useState("");
-
   // populate souce state with sources available
-  let [sourcesState, setSourcesState] = useState([]);
-
-  const [selectedSource, setSelectedSource] = useState("");
+  const [sourcesState, setSourcesState] = useState([]);
+  const [selectedSources, setSelectedSources] = useState([]);
+  const [selectedSourceScope, setSelectedSourceScope] = useState("global");
 
   useEffect(() => {
     async function fetchData() {
@@ -42,7 +41,8 @@ export function OptionsBox({
       setSourcesState(
           sources.map((source) => ({
             name: source.sourceName,
-            enabled: source.isDefault === "1"
+            enabled: source.isDefault === "1",
+            scope: source.scope,
           }))
       );
 
@@ -52,9 +52,9 @@ export function OptionsBox({
       // push names up to index
       let enabledSources = sources
           .filter((s) => s.isDefault === "1")
-          .map((s) => s.sourceName)
-          .join(",");
-      onChangeSources(enabledSources);
+          .map((s) => s.sourceName);
+      setSelectedSources(enabledSources);
+      onChangeSources(enabledSources.join(","));
       onChangeFamily(families[0].sourceName);
     }
 
@@ -63,35 +63,38 @@ export function OptionsBox({
 
   // controls the behavior of the user when he clicks the switch
   const handleChangeSources = (name) => {
-    let tmpSourcesState = sourcesState.map((source) => {
-      if (source.name === name) {
-        source.enabled = !source.enabled;
-        setSelectedSource(source.enabled ? name : "");
-        if (source.enabled) {
-          const element = document.getElementById(`source-${name.toLowerCase()}`);
-          if (element) {
-            element.scrollIntoView({ behavior: "smooth" });
-          }
-        }
-      }
-      return source;
-    });
+    let newSelectedSources;
+    if (selectedSources.includes(name)) {
+      newSelectedSources = selectedSources.filter(source => source !== name);
+    } else {
+      newSelectedSources = [...selectedSources, name];
+    }
+    setSelectedSources(newSelectedSources);
 
-    setSourcesState(tmpSourcesState);
-
-    let sourceNames = tmpSourcesState
-        .filter((s) => s.enabled)
-        .map((s) => s.name)
-        .join(",");
+    let sourceNames = newSelectedSources.join(",");
     onChangeSources(sourceNames);
+
+    const updatedSourcesState = sourcesState.map(source => ({
+      ...source,
+      enabled: newSelectedSources.includes(source.name),
+    }));
+    setSourcesState(updatedSourcesState);
   };
 
   const handleSelectFamily = (name) => {
     onChangeFamily(name);
     setFamilyQuery(name);
-    setSelectedSource("");
   };
 
+  const handleSourceScopeChange = (newScope) => {
+    setSelectedSourceScope(newScope);
+  };
+
+  const handleDeselectSource = (sourceName) => {
+    handleChangeSources(sourceName);
+  };
+
+  const filteredSources = sourcesState.filter((source) => source.scope === selectedSourceScope);
 
   return (
       <Paper className={classes.paper}>
@@ -99,10 +102,7 @@ export function OptionsBox({
           <Box>
             <InputLabel>Processing Mode</InputLabel>
             <FormControl variant="outlined" fullWidth>
-              <Select
-                  value={queryType}
-                  onChange={(e) => onChangeQueryType(e.target.value)}
-              >
+              <Select value={queryType} onChange={(e) => onChangeQueryType(e.target.value)}>
                 <MenuItem value={"resolve"}>Perform name resolution</MenuItem>
                 <MenuItem value={"parse"}>Parse names only</MenuItem>
               </Select>
@@ -113,10 +113,7 @@ export function OptionsBox({
                 <Box pt={2}>
                   <InputLabel>Family Classification</InputLabel>
                   <FormControl variant="outlined" fullWidth>
-                    <Select
-                        value={familyQuery}
-                        onChange={(e) => handleSelectFamily(e.target.value)}
-                    >
+                    <Select value={familyQuery} onChange={(e) => handleSelectFamily(e.target.value)}>
                       {familiesAvailable.map((f) => (
                           <MenuItem key={f.sourceName} value={f.sourceName}>
                             {f.sourceName.toUpperCase()}
@@ -125,37 +122,49 @@ export function OptionsBox({
                     </Select>
                   </FormControl>
                 </Box>
-                <Box pt={2}>
+                <Box pt={1.5}>
                   <FormLabel component="legend">
                     <Link href="/sources">Taxonomic Sources</Link>
                   </FormLabel>
-                  <FormGroup row>
-                    {sourcesState?.map((s) => {
-                      if (s.name){
-                        return (
-                            <FormControlLabel
-                                key={s.name}
-                                control={
-                                  <Switch
-                                      onClick={() => handleChangeSources(s.name)}
-                                      checked={s.enabled}
-                                  />
-                                }
-                                label={
-                                  <Link
-                                      href={`/sources#source-${s.name.toLowerCase()}`}
-                                      onClick={() => setSelectedSource(s.name)}
-                                      underline={selectedSource === s.name ? "always" : "hover"}
-                                  >
-                                    {s.name.toUpperCase()}
-                                  </Link>
-                                }
-                            />
-                        );
-                      }
-                      return null;
-                    })}
-                  </FormGroup>
+                  <FormControl variant="outlined" fullWidth>
+                    <Select
+                        value={selectedSourceScope}
+                        onChange={(e) => handleSourceScopeChange(e.target.value)}
+                    >
+                      <MenuItem value="global">Global Taxonomic Sources</MenuItem>
+                      <MenuItem value="limited">Taxonomic Source of Limited Taxonomic or Geographic Scope</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Box pt={1}>
+                    {filteredSources.map((s) => (
+                        <FormControlLabel
+                            key={s.name}
+                            control={<Switch onClick={() => handleChangeSources(s.name)} checked={selectedSources.includes(s.name)} />}
+                            label={
+                              <Link
+                                  href={`/sources#source-${s.name.toLowerCase()}`}
+                                  onClick={(e) => {
+                                    e.preventDefault(); // Prevent the switch from toggling
+                                    window.location.href = `/sources#source-${s.name.toLowerCase()}`;
+                                  }}
+                                  underline="hover"
+                              >
+                                {s.name.toUpperCase()}
+                              </Link>
+                            }
+                        />
+                    ))}
+                    <Box pt={2}>
+                      {selectedSources.map((source) => (
+                          <Chip
+                              key={source}
+                              label={source}
+                              onDelete={() => handleDeselectSource(source)}
+                              color="primary"
+                          />
+                      ))}
+                    </Box>
+                  </Box>
                 </Box>
               </>
           )}

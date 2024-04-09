@@ -124,7 +124,7 @@ export function OptionsBox({
                 </Box>
                 <Box pt={1.5}>
                   <FormLabel component="legend">
-                    <Link href="/sources">Taxonomic Sources</Link>
+                    <Link href="/sources" target="_blank" rel="noopener noreferrer">Taxonomic Sources</Link>
                   </FormLabel>
                   <FormControl variant="outlined" fullWidth>
                     <Select
@@ -139,15 +139,21 @@ export function OptionsBox({
                     {filteredSources.map((s) => (
                         <FormControlLabel
                             key={s.name}
-                            control={<Switch onClick={() => handleChangeSources(s.name)} checked={selectedSources.includes(s.name)} />}
+                            control={
+                              <Switch
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleChangeSources(s.name);
+                                  }}
+                                  checked={selectedSources.includes(s.name)}
+                              />
+                            }
                             label={
                               <Link
                                   href={`/sources#source-${s.name.toLowerCase()}`}
-                                  onClick={(e) => {
-                                    e.preventDefault(); // Prevent the switch from toggling
-                                    window.location.href = `/sources#source-${s.name.toLowerCase()}`;
-                                  }}
                                   underline="hover"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                               >
                                 {s.name.toUpperCase()}
                               </Link>

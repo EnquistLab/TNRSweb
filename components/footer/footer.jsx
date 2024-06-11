@@ -30,8 +30,7 @@ function TNRSFooter() {
                 </Box>
               </Box>
               <Box mt={1}>
-                An online tool for the standardization of global taxonomic
-                names.
+                An online tool for the standardization of plant taxonomic names.
               </Box>
             </Box>
           </Box>

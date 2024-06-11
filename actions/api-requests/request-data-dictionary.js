@@ -10,18 +10,15 @@ export const requestDataDictionary = async () => {
   };
 
   return await axios
-    .post(apiEndPoint, query, {
-      headers: { "Content-Type": "application/json" },
-    })
-    .then(
-      (response) => {
-        // setSources(response.data);
-        return response.data;
-      },
-      () => {
-        alert("There was an error while retrieving the data dictionary");
-      }
-    );
+      .post(apiEndPoint, query, {
+        headers: { "Content-Type": "application/json" },
+      })
+      .then(
+          (response) => {
+            return response.data;
+          },
+          () => {
+            alert("There was an error while retrieving the data dictionary");
+          }
+      );
 };
-
-

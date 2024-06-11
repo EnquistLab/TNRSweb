@@ -7,6 +7,7 @@ export * from './api-requests/request-citations'
 export * from './api-requests/request-tnrs-version'
 export * from './api-requests/request-meta'
 export * from './api-requests/request-data-dictionary'
+export * from './api-requests/request-synonyms'
 
 export * from './warnings'
 export * from './sort-by-column'
